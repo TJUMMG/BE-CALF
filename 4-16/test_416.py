@@ -1,6 +1,5 @@
 import numpy as np
 import os
-#os.environ["CUDA_VISIBLE_DEVICES"]="-1"
 import cv2
 import glob
 import tensorflow as tf
@@ -10,12 +9,15 @@ from tqdm import tqdm
 from becalf import becalf
 
 
+if not os.path.exists('results_416'):  # output directory
+    os.mkdir('results_416')
+
+
 def normalize(images):
     return np.array([image/65535.0 for image in images])
     
 
 def downscale(images):
-    #print images
     downs = [[[[0 for p in range(3)] for k in range(1024)] for j in range(436)] for i in range(len(images))]
     for ii in range(len(images)):
         for j in range(len(images[ii])):
@@ -41,20 +43,16 @@ sess.run(init)
 saver = tf.train.Saver()
 saver.restore(sess, './latest')
 
-#pic = './677.png'
-pics = glob.glob('../Source50/*')
+pics = glob.glob('../test/*')  # input images directory
 
 tt=0
-for i in tqdm(range(len(pics))):#
-#for i in range(1):#len(pics)):#
+for i in tqdm(range(len(pics))):
     x_t1 = cv2.imread(pics[i],3)
-    #x_t1 = cv2.imread(pic,3)
     x_t1n = x_t1[np.newaxis,:,:,:]
 
     downs = downscale(x_t1n)
-
+    
     cv2.imwrite('tmp.png',downs[0])
-
     starttime=time.time()
     x_t1 = cv2.imread('tmp.png',3)
     downs = x_t1[np.newaxis,:,:,:]
@@ -69,16 +67,11 @@ for i in tqdm(range(len(pics))):#
 
 
     full_name = pics[i].split('/')[-1]
-    #full_name = pic.split('/')[-1]
     pure_name = full_name.split('.')[0]
     clipped = np.clip(adda[0],0,1)
     im = np.uint16(clipped*65535.0)
     
-    #cv2.imwrite(pure_name+'_dsp_416.png',im)
     cv2.imwrite('./results_416/'+pure_name+'_becalf_416.png',im)
 
     print time.time()-starttime
 
-
-        
-        
